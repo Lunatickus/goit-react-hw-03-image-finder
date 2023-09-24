@@ -1,10 +1,10 @@
 import { Component } from 'react';
 import { Searchbar } from './Searchbar/Searchbar';
-import { RotatingLines } from 'react-loader-spinner';
 import { getImages } from 'services/getImages';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
 import { Modal } from './Modal/Modal';
+import { Loader } from './Loader/Loader';
 export class App extends Component {
   state = {
     images: [],
@@ -85,11 +85,7 @@ export class App extends Component {
             handleOpenModalImage={this.handleOpenModalImage}
           />
         )}
-        {isLoading && (
-          <div className="Loader">
-            <RotatingLines />
-          </div>
-        )}
+        {isLoading && <Loader />}
         {images.length < totalImages && (
           <Button incrementPage={this.incrementPage} />
         )}
