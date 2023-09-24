@@ -19,7 +19,7 @@ export class Modal extends Component {
     if (e.target === e.currentTarget) {
       this.props.onClose();
     }
-  }
+  };
 
   render() {
     return (

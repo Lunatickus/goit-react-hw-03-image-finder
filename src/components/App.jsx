@@ -7,7 +7,7 @@ import { Button } from './Button/Button';
 import { Modal } from './Modal/Modal';
 export class App extends Component {
   state = {
-    images: null,
+    images: [],
     query: '',
     isLoading: false,
     page: 1,
@@ -15,33 +15,37 @@ export class App extends Component {
     totalImages: 0,
   };
 
-  componentDidUpdate(prevProps, prevState) {
+  async componentDidUpdate(prevProps, prevState) {
     const prevQuery = prevState.query;
     const nextQuery = this.state.query;
     const prevPage = prevState.page;
     const nextPage = this.state.page;
 
     if (prevQuery !== nextQuery) {
-      this.setState({ isLoading: true, page: 1, images: null });
-      getImages(nextQuery, 1)
-        .then(resp => {
-          this.setState({
-            images: resp.data.hits,
-            totalImages: resp.data.total,
-          });
-        })
-        .catch(err => console.log(err))
-        .finally(() => this.setState({ isLoading: false }));
+      this.setState({ isLoading: true, page: 1, images: [] });
+      try {
+        const resp = await getImages(nextQuery, 1);
+        this.setState({
+          images: [...resp.hits],
+          totalImages: resp.total,
+        });
+      } catch (err) {
+        console.log(err);
+      } finally {
+        this.setState({ isLoading: false });
+      }
     } else if (prevPage !== nextPage && nextPage !== 1) {
       this.setState({ isLoading: true });
-      getImages(nextQuery, nextPage)
-        .then(resp => {
-          this.setState({
-            images: [...prevState.images, ...resp.data.hits],
-          });
-        })
-        .catch(err => console.log(err))
-        .finally(() => this.setState({ isLoading: false }));
+      try {
+        const resp = await getImages(nextQuery, nextPage);
+        this.setState({
+          images: [...prevState.images, ...resp.hits],
+        });
+      } catch (err) {
+        console.log(err);
+      } finally {
+        this.setState({ isLoading: false });
+      }
     }
   }
 
@@ -61,13 +65,13 @@ export class App extends Component {
     this.setState({
       largeImageURL: url,
     });
-  }
+  };
 
   handleCloseModalImage = () => {
     this.setState({
       largeImageURL: '',
     });
-  }
+  };
 
   render() {
     const { images, isLoading, largeImageURL, totalImages } = this.state;
@@ -75,14 +79,26 @@ export class App extends Component {
     return (
       <div className="App">
         <Searchbar onSubmit={this.onSubmit} />
-        {images && <ImageGallery images={images} handleOpenModalImage={this.handleOpenModalImage} />}
+        {images.length !== 0 && (
+          <ImageGallery
+            images={images}
+            handleOpenModalImage={this.handleOpenModalImage}
+          />
+        )}
         {isLoading && (
           <div className="Loader">
             <RotatingLines />
           </div>
         )}
-        {images && images.length < totalImages && <Button incrementPage={this.incrementPage} />}
-        {largeImageURL !== '' && <Modal onClose={this.handleCloseModalImage} largeImageURL={largeImageURL} />}
+        {images.length < totalImages && (
+          <Button incrementPage={this.incrementPage} />
+        )}
+        {largeImageURL !== '' && (
+          <Modal
+            onClose={this.handleCloseModalImage}
+            largeImageURL={largeImageURL}
+          />
+        )}
       </div>
     );
   }
