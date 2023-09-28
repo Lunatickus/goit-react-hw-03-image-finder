@@ -1,18 +1,19 @@
 import { Component } from 'react';
 import { Searchbar } from './Searchbar/Searchbar';
-import { getImages } from 'services/getImages';
+import { fetchImages } from 'services/api';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
 import { Modal } from './Modal/Modal';
 import { Loader } from './Loader/Loader';
 export class App extends Component {
   state = {
-    images: [],
+    images: null,
     query: '',
     isLoading: false,
     page: 1,
     largeImageURL: '',
     totalImages: 0,
+    error: null,
   };
 
   async componentDidUpdate(prevProps, prevState) {
@@ -22,27 +23,29 @@ export class App extends Component {
     const nextPage = this.state.page;
 
     if (prevQuery !== nextQuery) {
-      this.setState({ isLoading: true, page: 1, images: [] });
+      this.setState({ isLoading: true, page: 1, images: null });
       try {
-        const resp = await getImages(nextQuery, 1);
+        const {hits, total} = await fetchImages(nextQuery, 1);
         this.setState({
-          images: [...resp.hits],
-          totalImages: resp.total,
+          images: [...hits],
+          totalImages: total,
         });
       } catch (err) {
         console.log(err);
+        this.setState({error: err});
       } finally {
         this.setState({ isLoading: false });
       }
     } else if (prevPage !== nextPage && nextPage !== 1) {
       this.setState({ isLoading: true });
       try {
-        const resp = await getImages(nextQuery, nextPage);
+        const {hits} = await fetchImages(nextQuery, nextPage);
         this.setState({
-          images: [...prevState.images, ...resp.hits],
+          images: [...prevState.images, ...hits],
         });
       } catch (err) {
         console.log(err);
+        this.setState({error: err});
       } finally {
         this.setState({ isLoading: false });
       }
@@ -75,18 +78,19 @@ export class App extends Component {
 
   render() {
     const { images, isLoading, largeImageURL, totalImages } = this.state;
+    const showImages = Array.isArray(images) && images.length > 0;
 
     return (
       <div className="App">
         <Searchbar onSubmit={this.onSubmit} />
-        {images.length !== 0 && (
+        {showImages && (
           <ImageGallery
             images={images}
             handleOpenModalImage={this.handleOpenModalImage}
           />
         )}
         {isLoading && <Loader />}
-        {images.length < totalImages && (
+        {showImages && images.length < totalImages && (
           <Button incrementPage={this.incrementPage} />
         )}
         {largeImageURL !== '' && (
