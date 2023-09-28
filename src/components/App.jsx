@@ -16,7 +16,7 @@ export class App extends Component {
     error: null,
   };
 
-  async componentDidUpdate(prevProps, prevState) {
+  async componentDidUpdate(_, prevState) {
     const prevQuery = prevState.query;
     const nextQuery = this.state.query;
     const prevPage = prevState.page;
@@ -52,10 +52,20 @@ export class App extends Component {
     }
   }
 
-  onSubmit = value => {
+  onSubmit = e => {
+    e.preventDefault();
+
+    const searchedQuery = e.currentTarget.elements.searchQuery.value;
+
+    if (searchedQuery.trim() === '') {
+      return;
+    }
+
     this.setState({
-      query: value,
+      query: searchedQuery,
     });
+
+    e.currentTarget.reset();
   };
 
   incrementPage = () => {
